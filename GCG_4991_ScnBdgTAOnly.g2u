@@ -1,0 +1,155 @@
+Program.Sub.ScreenSU.Start
+gui.GUI_Badge..create
+gui.GUI_Badge..caption("Badge not Found")
+gui.GUI_Badge..size(6750,1965)
+gui.GUI_Badge..minx(0)
+gui.GUI_Badge..miny(0)
+gui.GUI_Badge..position(0,0)
+gui.GUI_Badge..alwaysontop(False)
+gui.GUI_Badge..fontname("Arial")
+gui.GUI_Badge..fontsize(8)
+gui.GUI_Badge..forecolor(0)
+gui.GUI_Badge..fontstyle(,,,,)
+gui.GUI_Badge..BackColor(-2147483633)
+gui.GUI_Badge..controlbox(True)
+gui.GUI_Badge..maxbutton(True)
+gui.GUI_Badge..minbutton(True)
+gui.GUI_Badge..mousepointer(0)
+gui.GUI_Badge..moveable(True)
+gui.GUI_Badge..sizeable(True)
+gui.GUI_Badge..ShowInTaskBar(True)
+gui.GUI_Badge..titlebar(True)
+gui.GUI_Badge.lbl1.create(label,"Badge ID Not Found - please contact IT Department",True,5205,315,1,700,500,True,0,Arial,10,-2147483633,0)
+gui.GUI_Badge.lbl1.fontstyle(True,False,False,False)
+gui.GUI_Badge.lbl1.defaultvalue("")
+gui.GUI_Badge.lbl1.controlgroup(0)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+f.Intrinsic.Control.If(v.Caller.Hook,=,15752)
+	f.Intrinsic.Control.CallSub(GoodToGo)
+f.Intrinsic.Control.ElseIf(v.Caller.Hook,=,49752)
+	f.Intrinsic.Control.CallSub(GoodToGoSFDC)
+f.Intrinsic.Control.Else
+	f.Intrinsic.Control.End
+f.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+Program.Sub.GoodToGo.Start
+f.Intrinsic.Control.Try
+'15752 - "%/" PREFIX
+
+'F.Intrinsic.Debug.ShowCallerInfo
+
+V.Local.sSQL.Declare(String,"SELECT EMPLOYEE FROM EMPLOYEE_MSTR WHERE ALPHA_SORT='{0}'")
+V.Local.sSQL2.Declare(String)
+V.Local.sScan.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sRet2.Declare(String)
+Function.ODBC.Connection!Con.OpenCompanyConnection
+F.Intrinsic.String.Replace(V.Passed.000007,"%/","",V.Local.sScan)
+
+V.Passed.000007.Set("")
+
+'Modify the SQL query by injecting the values that we extracted above
+Function.Intrinsic.String.Build(V.Local.sSQL,V.Local.sScan,V.Local.sSQL)
+
+'Execute query, retreieve results
+F.ODBC.Connection!Con.OpenRecordsetRO("RstSort",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!RstSort.EOF,"=",True)
+	'V.Passed.009993.Set(99999)
+	Gui.GUI_Badge..Visible(True)
+	F.Intrinsic.UI.SleepMS(2500)
+	Gui.GUI_Badge..Visible(False)
+	Function.Intrinsic.Control.ExitSub
+Function.Intrinsic.Control.EndIf
+f.Intrinsic.String.Build("SELECT EMPLOYEE FROM TIME_ATTENDANCE WHERE EMPLOYEE='{0}' AND DATE_OUT='00000000'",V.ODBC.Con!RstSort.FieldValString!EMPLOYEE,V.Local.sSQL2)
+'Function.Intrinsic.String.Concat("SELECT EMPLOYEE FROM TIME_ATTENDANCE WHERE EMPLOYEE='",V.ODBC.Con!RstSort.FieldValString!EMPLOYEE,"' AND DATE_OUT='00000000'",V.Local.sSQL2)
+F.ODBC.Connection!Con.OpenRecordsetRO("RstTa",V.Local.sSQL2)
+
+F.Intrinsic.Control.If(V.ODBC.Con!RstTa.EOF,"<>",True)
+	V.Passed.009993.Set(V.ODBC.Con!RstTa.FieldValString!EMPLOYEE)
+	V.Passed.Status.Set("CLOCK OUT")
+F.Intrinsic.Control.Else
+	V.Passed.009993.Set(V.ODBC.Con!RstSort.FieldValString!EMPLOYEE)
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Con!RstSort.Close
+F.ODBC.Con!RstTa.Close
+
+f.Intrinsic.Control.CallSub(UnloadAll)
+	
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.GoodToGo.End
+Program.Sub.catching.Start
+v.Local.sError.declare(string)
+F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_4991_ScnBdgTAOnly.g2u",V.Ambient.NewLine,v.Args.sub,V.Args.errorno,V.args.errordesc,V.Local.sError)
+f.Intrinsic.UI.Msgbox(v.Local.sError)
+f.Intrinsic.Control.CallSub(UnloadAll)
+Program.Sub.catching.End
+
+Program.Sub.UnloadAll.Start
+F.ODBC.Connection!Con.Close
+F.Intrinsic.Control.End
+Program.Sub.UnloadAll.End
+
+
+Program.Sub.GoodToGoSFDC.Start
+f.Intrinsic.Control.Try
+'49752 - "%/" PREFIX
+'F.Intrinsic.Debug.ShowCallerInfo
+
+V.Local.sSQL.Declare(String,"SELECT EMPLOYEE FROM EMPLOYEE_MSTR WHERE ALPHA_SORT='{0}'")
+V.Local.sSQL2.Declare(String)
+V.Local.sScan.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sRet2.Declare(String)
+Function.ODBC.Connection!Con.OpenCompanyConnection
+'F.Intrinsic.String.Replace(V.Passed.000007,"%/","",V.Local.sScan)
+
+'V.Passed.000007.Set("")
+
+'Modify the SQL query by injecting the values that we extracted above
+Function.Intrinsic.String.Build(V.Local.sSQL,V.Passed.scandata,V.Local.sSQL)
+
+'Execute query, retreieve results
+F.ODBC.Connection!Con.OpenRecordsetRO("RstSort",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!RstSort.EOF,"=",True)
+	'V.Passed.009993.Set(99999)
+	Gui.GUI_Badge..Visible(True)
+	F.Intrinsic.UI.SleepMS(2500)
+	Gui.GUI_Badge..Visible(False)
+	Function.Intrinsic.Control.ExitSub
+Function.Intrinsic.Control.EndIf
+f.Intrinsic.String.Build("SELECT EMPLOYEE FROM TIME_ATTENDANCE WHERE EMPLOYEE='{0}' AND DATE_OUT='00000000'",V.ODBC.Con!RstSort.FieldValString!EMPLOYEE,V.Local.sSQL2)
+'Function.Intrinsic.String.Concat("SELECT EMPLOYEE FROM TIME_ATTENDANCE WHERE EMPLOYEE='",V.ODBC.Con!RstSort.FieldValString!EMPLOYEE,"' AND DATE_OUT='00000000'",V.Local.sSQL2)
+F.ODBC.Connection!Con.OpenRecordsetRO("RstTa",V.Local.sSQL2)
+
+F.Intrinsic.Control.If(V.ODBC.Con!RstTa.EOF,"<>",True)
+	V.Passed.ReturnEmployeeID.Set(V.ODBC.Con!RstTa.FieldValString!EMPLOYEE)
+	V.Passed.Status.Set("CLOCK OUT")
+F.Intrinsic.Control.Else
+	V.Passed.ReturnEmployeeID.Set(V.ODBC.Con!RstSort.FieldValString!EMPLOYEE)
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Con!RstSort.Close
+F.ODBC.Con!RstTa.Close
+
+f.Intrinsic.Control.CallSub(UnloadAll)
+	
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.GoodToGoSFDC.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$$}$3/11/2015 11:24:12 PM$}$False
+Program.Sub.Comments.End
+
